@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gagne ta journée</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-title" content="Grenouille">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -31,6 +34,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 .link{display:block;margin:2px auto 0;border:0;background:none;color:var(--acc);font-size:14px;padding:4px 8px;min-height:32px}
 .board{margin:18px 0 26px;padding:22px 20px;border-radius:16px;background:var(--ink);color:var(--bg);text-align:center}
 .verdict{font:700 clamp(36px,9vw,56px)/1.02 "Shippori Mincho",serif;text-transform:uppercase;letter-spacing:.01em}
+#grenouille_dessin{display:flex;justify-content:center;margin:-6px 0 6px}
 .board.win .verdict{color:var(--acc)}
 .board.frog .verdict{color:var(--frog)}
 .sub{margin-top:8px;font-size:15px;opacity:.85}
@@ -90,7 +94,7 @@ input[type=number]{width:110px;height:40px;border-radius:10px;border:1px solid v
     <div><div id="dlabel" class="dl"></div><button id="today" class="link">Revenir à aujourd'hui</button></div>
     <button id="next" aria-label="Jour suivant">›</button>
   </div>
-  <div id="board" class="board"><div id="verdict" class="verdict">…</div><div id="sub" class="sub"></div><div id="count" class="count"></div></div>
+  <div id="board" class="board"><div id="grenouille_dessin" aria-hidden="true"></div><div id="verdict" class="verdict">…</div><div id="sub" class="sub"></div><div id="count" class="count"></div></div>
   <button id="bouton_plan_du_jour" class="tog" style="width:100%;margin-bottom:18px">Plan du jour (PDF)</button>
   <div id="levels"></div>
   <section class="sec"><h2>Ta semaine</h2><div id="week" class="week"></div><div id="wsum" class="wsum"></div></section>
@@ -160,6 +164,7 @@ function render(){
 
   const board = $('board');
   board.className = 'board' + (won?' win':frog?' frog':'');
+  $('grenouille_dessin').innerHTML = dessin_grenouille(won ? 'victoire' : frog ? 'contente' : 'attend');
   $('verdict').textContent = won ? 'Journée gagnée' : frog ? 'Grenouille mangée' : "Grenouille d'abord";
   $('sub').textContent = won ? 'Grenouille faite + au moins un goal de plus. Continue demain.'
     : frog ? 'Encore un goal du niveau 2 ou 3 pour gagner la journée.'
@@ -311,6 +316,63 @@ async function telecharger_plan_du_jour(){
   catch (erreur) { if (erreur.code !== 'declined') $('note').textContent = "Le PDF n'a pas pu se télécharger."; }
 }
 $('bouton_plan_du_jour').addEventListener('click', telecharger_plan_du_jour);
+
+/* ---------- 9. LE DESSIN DE LA GRENOUILLE ---------- */
+// Une grenouille originale, style estampe japonaise, aux couleurs de Ba Sing Se.
+// Son humeur change selon la journée :
+// 'attend' = grenouille pas encore mangée, 'contente' = grenouille mangée, 'victoire' = journée gagnée.
+function dessin_grenouille(humeur){
+  const encre = '#1B2418', peau = '#5E9E4E', taches = '#3F7F48', or = '#D9B54A', papier = '#EFE6CF';
+  const contour = `stroke="${encre}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"`;
+
+  const yeux = humeur === 'victoire'
+    ? `<path d="M52 52 Q60 43 68 52" fill="none" ${contour}/><path d="M92 52 Q100 43 108 52" fill="none" ${contour}/>`
+    : `<circle cx="60" cy="50" r="8" fill="#E3C25A" ${contour}/><circle cx="100" cy="50" r="8" fill="#E3C25A" ${contour}/>
+       <ellipse cx="60" cy="51" rx="5" ry="2" fill="${encre}"/><ellipse cx="100" cy="51" rx="5" ry="2" fill="${encre}"/>
+       ${humeur === 'attend'
+         ? `<path d="M51 50 Q60 39 69 50 Z" fill="${peau}" ${contour}/><path d="M91 50 Q100 39 109 50 Z" fill="${peau}" ${contour}/>`
+         : ''}`;
+
+  const bouche = humeur === 'attend'
+    ? `<path d="M50 75 Q56 72 80 73 Q104 72 110 75" fill="none" ${contour}/>`
+    : humeur === 'contente'
+      ? `<path d="M50 71 Q80 85 110 71" fill="none" ${contour}/>`
+      : `<path d="M50 69 Q80 94 110 69 Q80 80 50 69 Z" fill="#C2412D" ${contour}/>`;
+
+  const etincelles = humeur === 'victoire'
+    ? `<path d="M14 14 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="${or}"/>
+       <path d="M146 58 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z" fill="#B5BD3A"/>` : '';
+
+  const fleur = (x, y, t) => `<g transform="translate(${x} ${y}) scale(${t})">
+      <ellipse cx="-5" cy="-6" rx="5" ry="11" transform="rotate(-28 -5 -6)" fill="#F8F1DE" stroke="#C9BC98" stroke-width="1.2"/>
+      <ellipse cx="5" cy="-6" rx="5" ry="11" transform="rotate(28 5 -6)" fill="#F8F1DE" stroke="#C9BC98" stroke-width="1.2"/>
+      <ellipse cx="0" cy="-9" rx="4.5" ry="11" fill="#FFFDF6" stroke="#C9BC98" stroke-width="1.2"/>
+      <ellipse cx="0" cy="0" rx="4" ry="2.5" fill="#E7A6A0"/></g>`;
+
+  return `<svg viewBox="0 0 160 120" width="150" height="112" role="img" aria-label="Grenouille ${humeur}">
+    <circle cx="118" cy="30" r="24" fill="${or}" opacity=".85"/>
+    <g fill="none" stroke="${papier}" stroke-width="2.2" stroke-linecap="round" opacity=".55">
+      <path d="M6 40 q8 -10 18 -3 q6 -9 16 -2 q4 -5 10 -1"/><path d="M24 37 a4 4 0 1 1 -4 -4"/>
+      <path d="M96 22 q6 -7 13 -2 q5 -7 12 -1 q4 -4 9 0"/><path d="M136 46 q6 -6 12 -1 q4 -4 8 0"/>
+    </g>
+    ${etincelles}
+    <ellipse cx="80" cy="108" rx="68" ry="10" fill="#2E7D55"/>
+    <path d="M30 108 H130 M60 101 L80 108 L100 101" fill="none" stroke="#6CC08E" stroke-width="1.4" opacity=".6"/>
+    <path d="M30 101 C22 80 34 58 56 52 C68 48 92 48 104 52 C126 58 138 80 130 101 Z" fill="${peau}" ${contour}/>
+    <circle cx="60" cy="50" r="14" fill="${peau}" ${contour}/><circle cx="100" cy="50" r="14" fill="${peau}" ${contour}/>
+    <ellipse cx="44" cy="84" rx="5" ry="3.5" fill="${taches}"/><ellipse cx="116" cy="84" rx="5" ry="3.5" fill="${taches}"/>
+    <ellipse cx="70" cy="60" rx="3" ry="2" fill="${taches}"/><ellipse cx="92" cy="61" rx="3.5" ry="2" fill="${taches}"/>
+    <path d="M38 92 q-3 -11 8 -13 q8 0 6 8 q-1 5 -6 4" fill="none" stroke="${or}" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M122 92 q3 -11 -8 -13 q-8 0 -6 8 q1 5 6 4" fill="none" stroke="${or}" stroke-width="2.2" stroke-linecap="round"/>
+    <ellipse cx="80" cy="93" rx="25" ry="9" fill="${papier}"/>
+    <path d="M64 92 Q80 96 96 92" fill="none" stroke="#C9BC98" stroke-width="1.4"/>
+    <circle cx="44" cy="68" r="5" fill="#C2412D" opacity=".45"/><circle cx="116" cy="68" r="5" fill="#C2412D" opacity=".45"/>
+    ${yeux}${bouche}
+    <circle cx="45" cy="103" r="4" fill="${peau}" ${contour}/><circle cx="52" cy="105" r="4" fill="${peau}" ${contour}/><circle cx="59" cy="103" r="4" fill="${peau}" ${contour}/>
+    <circle cx="101" cy="103" r="4" fill="${peau}" ${contour}/><circle cx="108" cy="105" r="4" fill="${peau}" ${contour}/><circle cx="115" cy="103" r="4" fill="${peau}" ${contour}/>
+    ${fleur(146, 108, 1)}${fleur(14, 110, .8)}
+  </svg>`;
+}
 
 render();
 (async ()=>{
