@@ -6,18 +6,18 @@
 <title>Gagne ta journée</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* VOICE: un tableau de score de match, direct et motivant
    IDEA: le scoreboard d'un gym de basket — la journée est un match à gagner
    PICTURE: le gros verdict du jour en haut + les 3 niveaux comme des quarts
-   COLOUR and TYPE: fond clair, encre foncée, orange ballon de basket, vert grenouille; Barlow Condensed + Inter
+   COLOUR and TYPE: palette Ba Sing Se (papier, vert forêt, jade, or) + rouge crapaud pour gagner; Shippori Mincho + Inter
    LAYOUT: une colonne de 720px max, verdict, niveaux, semaine, mois */
 :root{color-scheme:light dark;
---bg:light-dark(#f3f1ec,#141619);--card:light-dark(#ffffff,#1d2024);--ink:light-dark(#1a1c20,#ecebe6);
---muted:light-dark(#6a6964,#9d9b94);--line:light-dark(#e2ddd2,#2d3137);
---acc:light-dark(#d9480f,#ff7a2e);--accbg:light-dark(#fff0e6,#3a2416);
---frog:light-dark(#2b8a3e,#5fd47a);--frogbg:light-dark(#e9f7ec,#16301d)}
+--bg:light-dark(#EFE6CF,#121A13);--card:light-dark(#F8F1DE,#1B261B);--ink:light-dark(#21311F,#ECE3C8);
+--muted:light-dark(#6E5B3E,#A89F80);--line:light-dark(#D8CBA6,#2F3D2C);
+--acc:light-dark(#C2412D,#E0664B);--accbg:light-dark(#F4DCD3,#3A1D16);
+--frog:light-dark(#2E7D55,#6CC08E);--frogbg:light-dark(#DCEAD8,#17301F)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
@@ -30,7 +30,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 .dl{font:600 18px/1.2 Inter,sans-serif;text-align:center;text-transform:capitalize}
 .link{display:block;margin:2px auto 0;border:0;background:none;color:var(--acc);font-size:14px;padding:4px 8px;min-height:32px}
 .board{margin:18px 0 26px;padding:22px 20px;border-radius:16px;background:var(--ink);color:var(--bg);text-align:center}
-.verdict{font:700 clamp(36px,9vw,56px)/1.02 "Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:.01em}
+.verdict{font:700 clamp(36px,9vw,56px)/1.02 "Shippori Mincho",serif;text-transform:uppercase;letter-spacing:.01em}
 .board.win .verdict{color:var(--acc)}
 .board.frog .verdict{color:var(--frog)}
 .sub{margin-top:8px;font-size:15px;opacity:.85}
@@ -40,9 +40,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 .lvl{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;transition:opacity .25s}
 .lvl.dim{opacity:.45}
 .lh{display:flex;gap:12px;align-items:center;margin-bottom:6px}
-.ln{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font:700 20px "Barlow Condensed",sans-serif;background:var(--bg)}
+.ln{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font:700 20px "Shippori Mincho",serif;background:var(--bg)}
 .l1 .ln{background:var(--frogbg);color:var(--frog)}
-h2{font:700 22px/1.1 "Barlow Condensed",sans-serif;margin:0;text-transform:uppercase;letter-spacing:.02em}
+h2{font:700 22px/1.1 "Shippori Mincho",serif;margin:0;text-transform:uppercase;letter-spacing:.02em}
 .lh p{margin:2px 0 0;font-size:14px;color:var(--muted)}
 .lock{font-size:13px;color:var(--muted);margin:4px 0 0 48px}
 .goal{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:12px 0;border-top:1px solid var(--line)}
@@ -56,7 +56,7 @@ h2{font:700 22px/1.1 "Barlow Condensed",sans-serif;margin:0;text-transform:upper
 .step{display:flex;align-items:center;gap:6px}
 .sl{font-size:13px;color:var(--muted)}
 .step button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:20px;line-height:1}
-.sv{min-width:62px;text-align:center;font:600 20px "Barlow Condensed",sans-serif;white-space:nowrap}
+.sv{min-width:62px;text-align:center;font:600 20px "Shippori Mincho",serif;white-space:nowrap}
 .tog{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--line);background:var(--bg);font-weight:600}
 .tog.on{background:var(--frog);border-color:var(--frog);color:#fff}
 input[type=number]{width:110px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:600 18px Inter,sans-serif;padding:0 10px;text-align:right}
