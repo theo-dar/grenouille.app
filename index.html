@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gagne ta journée</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: un tableau de score de match, direct et motivant
+   IDEA: le scoreboard d'un gym de basket — la journée est un match à gagner
+   PICTURE: le gros verdict du jour en haut + les 3 niveaux comme des quarts
+   COLOUR and TYPE: fond clair, encre foncée, orange ballon de basket, vert grenouille; Barlow Condensed + Inter
+   LAYOUT: une colonne de 720px max, verdict, niveaux, semaine, mois */
+:root{color-scheme:light dark;
+--bg:light-dark(#f3f1ec,#141619);--card:light-dark(#ffffff,#1d2024);--ink:light-dark(#1a1c20,#ecebe6);
+--muted:light-dark(#6a6964,#9d9b94);--line:light-dark(#e2ddd2,#2d3137);
+--acc:light-dark(#d9480f,#ff7a2e);--accbg:light-dark(#fff0e6,#3a2416);
+--frog:light-dark(#2b8a3e,#5fd47a);--frogbg:light-dark(#e9f7ec,#16301d)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
+.wrap{max-width:720px;margin:0 auto;padding:clamp(16px,4vw,32px) max(4vw,14px) 48px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nav>button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:22px;line-height:1}
+.nav>button:disabled{opacity:.35;cursor:default}
+.dl{font:600 18px/1.2 Inter,sans-serif;text-align:center;text-transform:capitalize}
+.link{display:block;margin:2px auto 0;border:0;background:none;color:var(--acc);font-size:14px;padding:4px 8px;min-height:32px}
+.board{margin:18px 0 26px;padding:22px 20px;border-radius:16px;background:var(--ink);color:var(--bg);text-align:center}
+.verdict{font:700 clamp(36px,9vw,56px)/1.02 "Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:.01em}
+.board.win .verdict{color:var(--acc)}
+.board.frog .verdict{color:var(--frog)}
+.sub{margin-top:8px;font-size:15px;opacity:.85}
+.count{margin-top:12px;display:flex;justify-content:center;gap:6px}
+.count i{width:26px;height:8px;border-radius:4px;background:color-mix(in srgb,var(--bg) 25%,transparent)}
+.count i.on{background:var(--acc)}.count i.on.f{background:var(--frog)}
+.lvl{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;transition:opacity .25s}
+.lvl.dim{opacity:.45}
+.lh{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.ln{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font:700 20px "Barlow Condensed",sans-serif;background:var(--bg)}
+.l1 .ln{background:var(--frogbg);color:var(--frog)}
+h2{font:700 22px/1.1 "Barlow Condensed",sans-serif;margin:0;text-transform:uppercase;letter-spacing:.02em}
+.lh p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.lock{font-size:13px;color:var(--muted);margin:4px 0 0 48px}
+.goal{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:12px 0;border-top:1px solid var(--line)}
+.goal:first-of-type{border-top:0}
+.gt{display:flex;gap:10px;align-items:center;flex:1 1 200px}
+.chk{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:15px;color:#fff}
+.goal.ok .chk{background:var(--acc);border-color:var(--acc)}
+.l1 .goal.ok .chk{background:var(--frog);border-color:var(--frog)}
+.gt b{display:block;font-weight:600}.gt small{display:block;color:var(--muted);font-size:13px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:flex-end}
+.step{display:flex;align-items:center;gap:6px}
+.sl{font-size:13px;color:var(--muted)}
+.step button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:20px;line-height:1}
+.sv{min-width:62px;text-align:center;font:600 20px "Barlow Condensed",sans-serif;white-space:nowrap}
+.tog{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--line);background:var(--bg);font-weight:600}
+.tog.on{background:var(--frog);border-color:var(--frog);color:#fff}
+input[type=number]{width:110px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:600 18px Inter,sans-serif;padding:0 10px;text-align:right}
+.sec{margin-top:28px}
+.sec h2{margin-bottom:10px}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.wd{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 0 10px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:58px}
+.wd span{font-size:13px;color:var(--muted)}
+.wd i{width:18px;height:18px;border-radius:50%;background:var(--line)}
+.wd.lost i{background:transparent;border:2px solid var(--muted)}
+.wd.won i{background:var(--acc)}
+.wd.cur{border-color:var(--ink);border-width:2px}
+.wsum{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pill{padding:6px 12px;border-radius:16px;background:var(--card);border:1px solid var(--line);font-size:14px;white-space:nowrap}
+.pill.ok{background:var(--accbg);border-color:var(--acc);color:var(--acc);font-weight:600}
+.month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.mh{font-size:12px;color:var(--muted);text-align:center;padding-bottom:2px}
+.md{aspect-ratio:1;border:0;border-radius:8px;background:var(--card);font-size:13px;display:grid;place-items:center;padding:0}
+.md.lost{background:var(--line)}
+.md.won{background:var(--acc);color:#fff;font-weight:600}
+.md.cur{outline:2px solid var(--ink);outline-offset:-2px}
+.md.fut{opacity:.35;cursor:default}
+.note{margin-top:24px;font-size:13px;color:var(--muted);text-align:center}
+@media(prefers-reduced-motion:reduce){.lvl{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <button id="prev" aria-label="Jour précédent">‹</button>
+    <div><div id="dlabel" class="dl"></div><button id="today" class="link">Revenir à aujourd'hui</button></div>
+    <button id="next" aria-label="Jour suivant">›</button>
+  </div>
+  <div id="board" class="board"><div id="verdict" class="verdict">…</div><div id="sub" class="sub"></div><div id="count" class="count"></div></div>
+  <button id="bouton_plan_du_jour" class="tog" style="width:100%;margin-bottom:18px">Plan du jour (PDF)</button>
+  <div id="levels"></div>
+  <section class="sec"><h2>Ta semaine</h2><div id="week" class="week"></div><div id="wsum" class="wsum"></div></section>
+  <section class="sec"><h2 id="mtitle">Ton mois</h2><div id="month" class="month"></div><div id="msum" class="wsum"></div></section>
+  <p id="note" class="note"></p>
+</div>
+<script>
+{
+/* ---------- 1. LES GOALS (modifie ici pour changer tes règles) ---------- */
+const GOALS = [
+  {id:'devoirs', niveau:1, nom:'Devoirs', detail:'2 h minimum', ok:d=>d.devoirs>=120},
+  {id:'cours',   niveau:1, nom:'Cours à jour', detail:'aucun cours en retard', ok:d=>d.cours},
+  {id:'bouger',  niveau:2, nom:'Bouger', detail:'10 000 pas OU du sport', ok:d=>d.pas>=10000||d.sport>0},
+  {id:'bouffe',  niveau:2, nom:'Bien manger', detail:'plus de repas bien que pas bien', ok:d=>d.bien>0&&d.bien>d.mal},
+  {id:'dj',      niveau:3, nom:'DJ', detail:'session de 20 min et plus', ok:d=>d.dj>=20, hebdo:2},
+  {id:'amis',    niveau:3, nom:'Amis / blonde', detail:'30 min et plus ensemble', ok:d=>d.amis>=30, hebdo:3},
+];
+const NIVEAUX = {
+  1:['La grenouille','Ta tâche la plus dure, en premier'],
+  2:['Ton corps','Bouger et bien manger'],
+  3:['Ta vie','Ce qui te nourrit']
+};
+const EMPTY = {devoirs:0,cours:false,pas:0,sport:0,bien:0,mal:0,dj:0,amis:0};
+
+/* ---------- 2. LES RÈGLES DE SCORE ---------- */
+const getDay = k => ({...EMPTY, ...(days[k]||{})});
+const frogDone = d => GOALS.filter(g=>g.niveau===1).every(g=>g.ok(d));
+const dayWon = d => frogDone(d) && GOALS.some(g=>g.niveau>1 && g.ok(d));
+const hasData = d => Object.keys(EMPTY).some(f=>d[f]);
+
+/* ---------- 3. LES DATES ---------- */
+const pad = n => String(n).padStart(2,'0');
+const keyOf = dt => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+const dateOf = k => { const [y,m,d]=k.split('-').map(Number); return new Date(y,m-1,d); };
+const addDays = (k,n) => { const dt=dateOf(k); dt.setDate(dt.getDate()+n); return keyOf(dt); };
+const todayKey = () => keyOf(new Date());
+const weekKeys = k => { const dt=dateOf(k); const off=(dt.getDay()+6)%7; const mon=addDays(k,-off); return [0,1,2,3,4,5,6].map(i=>addDays(mon,i)); };
+const hm = m => { if(!m) return '0'; const h=Math.floor(m/60), r=m%60; return h ? `${h} h${r?' '+pad(r):''}` : `${r} min`; };
+
+/* ---------- 4. L'ÉTAT ---------- */
+let days = {};
+let cur = todayKey();
+let db = null, mode = 'loading';
+try { days = JSON.parse(localStorage.getItem('gj-days')||'{}'); } catch(e) { days = {}; }
+const saveLocal = () => { try { localStorage.setItem('gj-days', JSON.stringify(days)); } catch(e) {} };
+
+/* ---------- 5. L'AFFICHAGE ---------- */
+const $ = id => document.getElementById(id);
+const step = (k,label,val,delta,fmt) =>
+  `<div class="step">${label?`<span class="sl">${label}</span>`:''}<button data-k="${k}" data-d="${-delta}" aria-label="Moins ${label||k}">−</button><span class="sv">${fmt(val)}</span><button data-k="${k}" data-d="${delta}" aria-label="Plus ${label||k}">+</button></div>`;
+const CTL = {
+  devoirs: d => step('devoirs','',d.devoirs,30,hm),
+  cours:   d => `<button class="tog ${d.cours?'on':''}" data-t="cours" aria-pressed="${d.cours}">${d.cours?'À jour':'Pas à jour'}</button>`,
+  bouger:  d => `<div class="step"><label class="sl" for="pas">Pas</label><input id="pas" type="number" inputmode="numeric" min="0" step="100" placeholder="0" value="${d.pas||''}"></div>` + step('sport','Basket / sport',d.sport,30,hm),
+  bouffe:  d => step('bien','Bien',d.bien,1,x=>x) + step('mal','Pas bien',d.mal,1,x=>x),
+  dj:      d => step('dj','',d.dj,15,hm),
+  amis:    d => step('amis','',d.amis,30,hm),
+};
+const weekCount = g => weekKeys(cur).filter(k=>g.ok(getDay(k))).length;
+
+function render(){
+  if (document.activeElement && document.activeElement.id==='pas') return;
+  const d = getDay(cur), frog = frogDone(d), won = dayWon(d);
+  $('dlabel').textContent = dateOf(cur).toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
+  $('today').style.visibility = cur===todayKey() ? 'hidden' : 'visible';
+  $('next').disabled = cur>=todayKey();
+
+  const board = $('board');
+  board.className = 'board' + (won?' win':frog?' frog':'');
+  $('verdict').textContent = won ? 'Journée gagnée' : frog ? 'Grenouille mangée' : "Grenouille d'abord";
+  $('sub').textContent = won ? 'Grenouille faite + au moins un goal de plus. Continue demain.'
+    : frog ? 'Encore un goal du niveau 2 ou 3 pour gagner la journée.'
+    : 'Attaque ta tâche la plus dure avant le reste : devoirs + cours à jour.';
+  $('count').innerHTML = GOALS.map(g=>`<i class="${g.ok(d)?'on':''} ${g.niveau===1?'f':''}"></i>`).join('');
+
+  $('levels').innerHTML = [1,2,3].map(n=>{
+    const gs = GOALS.filter(g=>g.niveau===n);
+    return `<section class="lvl l${n} ${n>1&&!frog?'dim':''}">
+      <div class="lh"><span class="ln">${n}</span><div><h2>${NIVEAUX[n][0]}</h2><p>${NIVEAUX[n][1]}</p></div></div>
+      ${n>1&&!frog?'<p class="lock">Ça compte quand même, mais la grenouille passe avant.</p>':''}
+      ${gs.map(g=>{
+        const ok=g.ok(d);
+        const det = g.hebdo ? `${g.detail} · ${weekCount(g)}/${g.hebdo} cette semaine` : g.detail;
+        return `<div class="goal ${ok?'ok':''}"><div class="gt"><span class="chk" aria-hidden="true">${ok?'✓':''}</span><div><b>${g.nom}</b><small>${det}</small></div></div><div class="ctl">${CTL[g.id](d)}</div></div>`;
+      }).join('')}
+    </section>`;
+  }).join('');
+
+  const wk = weekKeys(cur), today = todayKey();
+  const wins = wk.filter(k=>dayWon(getDay(k))).length;
+  $('week').innerHTML = wk.map((k,i)=>{
+    const dd=getDay(k), cls = dayWon(dd)?'won':hasData(dd)?'lost':'';
+    return `<button class="wd ${cls} ${k===cur?'cur':''}" data-day="${k}" ${k>today?'disabled':''} aria-label="${dateOf(k).toLocaleDateString('fr-CA',{weekday:'long',day:'numeric'})}"><span>${'LMMJVSD'[i]}</span><i></i></button>`;
+  }).join('');
+  const hebdo = GOALS.filter(g=>g.hebdo);
+  const weekWon = wins>=5 && hebdo.every(g=>weekCount(g)>=g.hebdo);
+  $('wsum').innerHTML = `<span class="pill ${wins>=5?'ok':''}">${wins}/7 jours gagnés</span>` +
+    hebdo.map(g=>`<span class="pill ${weekCount(g)>=g.hebdo?'ok':''}">${g.nom} ${weekCount(g)}/${g.hebdo}</span>`).join('') +
+    `<span class="pill ${weekWon?'ok':''}">${weekWon?'Semaine gagnée':'But : 5 jours + goals hebdo'}</span>`;
+
+  const c = dateOf(cur), first = new Date(c.getFullYear(), c.getMonth(), 1);
+  const nb = new Date(c.getFullYear(), c.getMonth()+1, 0).getDate(), off = (first.getDay()+6)%7;
+  $('mtitle').textContent = 'Ton mois · ' + c.toLocaleDateString('fr-CA',{month:'long'});
+  let cells = 'LMMJVSD'.split('').map(x=>`<div class="mh">${x}</div>`).join('') + '<div></div>'.repeat(off);
+  let mWins = 0, mPlayed = 0;
+  for (let i=1;i<=nb;i++){
+    const k = keyOf(new Date(c.getFullYear(), c.getMonth(), i)), dd = getDay(k);
+    const w = dayWon(dd), fut = k>today;
+    if (!fut){ mPlayed++; if(w) mWins++; }
+    cells += `<button class="md ${w?'won':hasData(dd)?'lost':''} ${k===cur?'cur':''} ${fut?'fut':''}" data-day="${k}" ${fut?'disabled':''}>${i}</button>`;
+  }
+  $('month').innerHTML = cells;
+  $('msum').innerHTML = `<span class="pill ${mPlayed&&mWins/mPlayed>=.7?'ok':''}">${mWins}/${mPlayed} jours gagnés jusqu'ici</span>`;
+
+  $('note').textContent = mode==='db' ? 'Sauvegardé dans ton compte Claude.'
+    : mode==='local' ? 'Sauvegardé sur cet appareil seulement.'
+    : mode==='slow' ? 'La sauvegarde en ligne ne répond pas encore. Tes données restent sur cet appareil.'
+    : 'Connexion à la sauvegarde…';
+}
+
+/* ---------- 6. LES ACTIONS ---------- */
+function change(field, value){
+  days[cur] = {...getDay(cur), [field]: value};
+  saveLocal(); persist(cur); render();
+}
+document.addEventListener('click', e=>{
+  const s = e.target.closest('[data-k]'), t = e.target.closest('[data-t]'), dd = e.target.closest('[data-day]');
+  if (s){ const k=s.dataset.k; change(k, Math.max(0, getDay(cur)[k] + Number(s.dataset.d))); }
+  else if (t){ const k=t.dataset.t; change(k, !getDay(cur)[k]); }
+  else if (dd && !dd.disabled){ cur = dd.dataset.day; render(); }
+});
+document.addEventListener('change', e=>{
+  if (e.target.id==='pas'){ const v=Math.max(0, parseInt(e.target.value,10)||0); e.target.blur(); change('pas', v); }
+});
+document.addEventListener('keydown', e=>{ if(e.target.id==='pas' && e.key==='Enter') e.target.blur(); });
+$('prev').addEventListener('click', ()=>{ cur = addDays(cur,-1); render(); });
+$('next').addEventListener('click', ()=>{ if(cur<todayKey()){ cur = addDays(cur,1); render(); } });
+$('today').addEventListener('click', ()=>{ cur = todayKey(); render(); });
+
+/* ---------- 7. LA SAUVEGARDE EN LIGNE ---------- */
+const dirty = new Set(), timers = {}, writing = {};
+function persist(k){
+  if (!db) return;
+  dirty.add(k); clearTimeout(timers[k]);
+  timers[k] = setTimeout(()=>flush(k), 500);
+}
+async function flush(k){
+  if (writing[k]) { writing[k] = 'again'; return; }
+  writing[k] = true;
+  try { await db.doc('days/'+k).set({...days[k]}); }
+  catch(err){ $('note').textContent = "Pas pu sauvegarder en ligne. C'est gardé sur cet appareil."; }
+  const again = writing[k]==='again';
+  writing[k] = false;
+  if (again) flush(k); else dirty.delete(k);
+}
+
+/* ---------- 8. LE PLAN DU JOUR (PDF) ---------- */
+const LARGEUR_PAGE = 612, HAUTEUR_PAGE = 792;
+const COULEUR_ENCRE = '#222222';
+const COULEURS_FOND = {ecole:'#DCE8FA', sport:'#FDE3C8', bouffe:'#DDF2DC', fun:'#EADCF8', repos:'#EEEEEE'};
+const COULEURS_ACCENT = {ecole:'#2F6FD6', sport:'#E07B1F', bouffe:'#3E9B3A', fun:'#8A4FD1', repos:'#777777'};
+
+// jsPDF compte le y depuis le HAUT de la page, reportlab depuis le BAS.
+// Cette petite fonction convertit, comme ça je garde les mêmes chiffres que make.py.
+const y_depuis_le_bas = y => HAUTEUR_PAGE - y;
+
+function ligne(pdf, x1, y1, x2, y2){
+  pdf.line(x1, y_depuis_le_bas(y1), x2, y_depuis_le_bas(y2));
+}
+
+function dessiner_bonhomme(pdf, x, y, taille=1, bras=null, jambes=null){
+  pdf.setDrawColor(COULEUR_ENCRE); pdf.setLineWidth(1.6); pdf.setLineCap('round');
+  const hanche_y = y + 13*taille, cou_y = y + 26*taille, epaule_y = y + 23*taille;
+  pdf.circle(x, y_depuis_le_bas(y + 30.5*taille), 4.5*taille, 'S');
+  ligne(pdf, x, cou_y, x, hanche_y);
+  for (const [dx, dy] of (bras || [[-8,-8],[8,-8]])) ligne(pdf, x, epaule_y, x + dx*taille, epaule_y + dy*taille);
+  for (const [dx, dy] of (jambes || [[-6,-13],[6,-13]])) ligne(pdf, x, hanche_y, x + dx*taille, hanche_y + dy*taille);
+}
+
+function bonhomme_ordi(pdf, x, y){
+  dessiner_bonhomme(pdf, x-8, y, 1, [[10,-6],[12,-4]], [[4,-13],[-2,-13]]);
+  pdf.setFillColor('#555555'); pdf.rect(x+2, y_depuis_le_bas(y+13), 16, 2, 'F');
+  ligne(pdf, x+4, y+13, x+8, y+25); ligne(pdf, x+8, y+25, x+20, y+25); ligne(pdf, x+20, y+25, x+16, y+13);
+}
+
+function creer_pdf_plan_du_jour(){
+  const { jsPDF } = window.jspdf;
+  const nom_du_jour = dateOf(cur).toLocaleDateString('fr-CA', {weekday:'long', day:'numeric', month:'short'});
+  const pdf = new jsPDF({unit:'pt', format:'letter'});
+  pdf.setTextColor(COULEUR_ENCRE); pdf.setFont('helvetica','bold'); pdf.setFontSize(22);
+  pdf.text(nom_du_jour.charAt(0).toUpperCase() + nom_du_jour.slice(1) + ' — plan de match', 36, y_depuis_le_bas(HAUTEUR_PAGE-50));
+
+  // une seule rangée pour l'instant (données écrites à la main)
+  const hauteur_rangee = 54, bas_rangee = HAUTEUR_PAGE - 150, categorie = 'ecole';
+  pdf.setFillColor(COULEURS_FOND[categorie]);
+  pdf.roundedRect(36, y_depuis_le_bas(bas_rangee + hauteur_rangee), LARGEUR_PAGE-72, hauteur_rangee, 6, 6, 'F');
+  pdf.setFillColor(COULEURS_ACCENT[categorie]);
+  pdf.roundedRect(36, y_depuis_le_bas(bas_rangee + hauteur_rangee), 6, hauteur_rangee, 3, 3, 'F');
+
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(11);
+  pdf.text('11:00–13:00', 50, y_depuis_le_bas(bas_rangee + hauteur_rangee/2 - 4));
+  bonhomme_ordi(pdf, 165, bas_rangee + 8);
+  pdf.setFontSize(12.5);
+  pdf.text('TP4 : finir + push', 210, y_depuis_le_bas(bas_rangee + hauteur_rangee - 19));
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor('#333333');
+  pdf.text('La grenouille. Push pour que Tony teste son client.', 210, y_depuis_le_bas(bas_rangee + 10));
+  return pdf;
+}
+
+async function telecharger_plan_du_jour(){
+  const pdf = creer_pdf_plan_du_jour();
+  const nom_du_fichier = `plan-${cur}.pdf`;
+  // Sur claude.ai : on passe par la fonction de téléchargement de Claude (iPhone = feuille de partage).
+  // Ailleurs (fichier ouvert sur mon PC) : jsPDF télécharge directement.
+  const telechargements = (typeof claude !== 'undefined' && claude.use) ? await claude.use('downloads') : null;
+  if (!telechargements) { pdf.save(nom_du_fichier); return; }
+  try { await telechargements.save({filename: nom_du_fichier, data: pdf.output('blob')}); }
+  catch (erreur) { if (erreur.code !== 'declined') $('note').textContent = "Le PDF n'a pas pu se télécharger."; }
+}
+$('bouton_plan_du_jour').addEventListener('click', telecharger_plan_du_jour);
+
+render();
+(async ()=>{
+  const timer = setTimeout(()=>{ if(mode==='loading'){ mode='slow'; render(); } }, 10000);
+  try { db = (typeof claude!=='undefined' && claude.use) ? await claude.use('db') : null; } catch(e){ db = null; }
+  if (!db){ clearTimeout(timer); mode='local'; render(); return; }
+  db.collection('days').onSnapshot(snap=>{
+    if (!snap.metadata.fromCache){ clearTimeout(timer); mode='db'; }
+    snap.docs.forEach(s=>{ if(!dirty.has(s.id)) days[s.id] = {...s.data()}; });
+    saveLocal(); render();
+  }, ()=>{ clearTimeout(timer); mode='local'; render(); });
+})();
+}
+</script>
+</body>
+</html>
